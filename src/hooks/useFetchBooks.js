@@ -19,36 +19,49 @@ const useFetchBooks = (searchParams) => {
 
       const baseUrl = "https://www.googleapis.com/books/v1/volumes";
       const key = import.meta.env.VITE_GOOGLE_BOOKS_API_KEY;
+      const { searchValue, searchType, language, sortType } = searchParams;
 
       const createQueryParam = () => {
-        const { searchValue, searchType } = searchParams;
         const normalizedValue = searchValue.replace(/\./g, "").replace(/\s+/g, " ").trim();
         const parts = normalizedValue.split(" ");
-
+    
         if (searchType === "title") {
-          return `intitle:"${searchValue}"`;
+            return `intitle:"${searchValue}"`;
         } else if (searchType === "author") {
-          if (parts.length >= 2) {
-            const atLeastTwoWords = parts.map(part => `inauthor:"${part}"`).join(' AND ');
+            let queries = [];
+    
+            // Generate queries for each part (individual words)
+            parts.forEach(part => {
+                queries.push(`inauthor:"${part}"`);
+            });
+    
+            // Combine parts for a full name search
             const combinedQuery = parts.join(" ");
-            return `${atLeastTwoWords} OR inauthor:"${combinedQuery}" OR inauthor:"${normalizedValue}"`;
-          }
-          return `inauthor:"${normalizedValue}"`;
+            queries.push(`inauthor:"${combinedQuery}"`);
+            queries.push(`inauthor:"${normalizedValue}"`);
+    
+            // Create a version that keeps initials separate
+            const withInitials = parts.map(part => `inauthor:"${part}*"`).join(' AND ');
+            queries.push(withInitials);
+    
+            // Join all queries with OR
+            return queries.join(' OR ');
         } else if (searchType === "subject") {
-          return `subject:"${searchValue}"`;
+            return `subject:"${searchValue}"`;
         }
         return '';
-      };
+    };
+    
 
       const queryParam = createQueryParam();
-      const apiSortType = "relevance";
 
       try {
         const response = await fetch(
-          `${baseUrl}?q=${queryParam}&maxResults=40&langRestrict=${searchParams.language}&printType=books&orderBy=${apiSortType}&fields=items(id,volumeInfo(title,authors,description,imageLinks,canonicalVolumeLink,categories,publishedDate,publisher,pageCount,averageRating))&key=${key}`
+          `${baseUrl}?q=${queryParam}&maxResults=40&langRestrict=${language}&printType=books&orderBy=${sortType}&fields=items(id,volumeInfo(title,authors,language,description,imageLinks,canonicalVolumeLink,categories,publishedDate,publisher,pageCount,averageRating))&key=${key}`
         );
 
         const data = await response.json();
+        console.log(data);
         const uniqueBooks = data.items?.filter((item, index, self) =>
           index === self.findIndex(t => t.volumeInfo.title === item.volumeInfo.title)
         ) || [];

@@ -3,7 +3,8 @@ import Box from "@mui/material/Box";
 import BookItem from "./BookItem";
 import Paginate from "./Paginate";
 
-const BookList = ({ books }) => {
+const BookList = ({ books, language }) => {
+  console.log(books, language);
   const [currentPage, setCurrentPage] = useState(1);
   const booksPerPage = 10;
   const indexOfLastBook = currentPage * booksPerPage;
@@ -23,7 +24,7 @@ const BookList = ({ books }) => {
         }}
       >
         {currentBooks.map((book, index) => (
-          <BookItem key={book.id || index} book={book} />
+          book.volumeInfo.language === language && <BookItem key={book.id || index} book={book} />
         ))}
       </Box>
       <Box

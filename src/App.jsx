@@ -25,7 +25,7 @@ const App = () => {
       <BookSearch onSearch={handleSearch} searchParams={searchParams} />
       {loading && <CenterdSpinner />}
       {error && <p>Error: {error.message}</p>}
-      {success && <BookList books={books} />}
+      {success && <BookList books={books} language={searchParams.language} />}
     </div>
   );
 };
